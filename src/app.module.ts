@@ -1,0 +1,29 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UsersModule } from './entities/user/user.module';
+import { LeaveBalanceModule } from './entities/leave-balance/leave-balance.module';
+import { LeaveTypeModule } from './entities/leave-type/leave.type.module';
+import { LeaveEventModule } from './entities/leave-event/leave-event.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: 'localhost',
+      port: 5432,
+      username: 'postgres',
+      password: 'katarina0506',
+      database: 'leave_management',
+      autoLoadEntities: true,
+      synchronize: false,
+    }),
+
+    UsersModule,
+    LeaveTypeModule,
+    LeaveEventModule,
+    LeaveBalanceModule,
+  ],
+  controllers: [],
+  providers: [],
+})
+export class AppModule {}
