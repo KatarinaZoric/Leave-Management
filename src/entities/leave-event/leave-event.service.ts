@@ -26,16 +26,34 @@ export class LeaveEventService {
     endDate: Date,
     note?: string,
   ): Promise<LeaveEvent> {
+
+  const overlappingEvent = await this.leaveEventRepo
+  .createQueryBuilder('event')
+  .where('event.userId = :userId', { userId })
+  .andWhere(
+    'event.startDate <= :endDate AND event.endDate >= :startDate',
+    { startDate, endDate },
+  )
+  .andWhere('event.status IN (:...statuses)', {
+  statuses: ['PENDING', 'APPROVED'],
+  })
+  .getOne();
+
+  if (overlappingEvent) {
+  throw new Error('Zaposleni je vec zatražio odsustvo u tom periodu');
+  }
+
     const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) throw new Error('User not found');
 
     const leaveType = await this.leaveTypeRepo.findOneBy({ id: leaveTypeId });
     if (!leaveType) throw new Error('Leave type not found');
 
-    const days =
-      Math.ceil(
-        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-      ) + 1;
+    const days = this.calculateWorkingDays(startDate, endDate);
+
+    if (days === 0) {
+    throw new Error('Označeni period je vikend');
+    }
 
     const leaveEvent = this.leaveEventRepo.create({
       user,
@@ -99,4 +117,22 @@ export class LeaveEventService {
       relations: ['user', 'leaveType'],
     });
   }
+
+  private calculateWorkingDays(startDate: Date, endDate: Date): number {
+  let days = 0;
+  const current = new Date(startDate);
+
+  while (current <= endDate) {
+    const dayOfWeek = current.getDay();
+
+    // 0 = nedelja, 6 = subota
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      days++;
+    }
+
+    current.setDate(current.getDate() + 1);
+  }
+
+  return days;
+}
 }

@@ -4,6 +4,7 @@ import { UsersModule } from './entities/user/user.module';
 import { LeaveBalanceModule } from './entities/leave-balance/leave-balance.module';
 import { LeaveTypeModule } from './entities/leave-type/leave.type.module';
 import { LeaveEventModule } from './entities/leave-event/leave-event.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { LeaveEventModule } from './entities/leave-event/leave-event.module';
     LeaveTypeModule,
     LeaveEventModule,
     LeaveBalanceModule,
+    AuthModule
   ],
   controllers: [],
   providers: [],
