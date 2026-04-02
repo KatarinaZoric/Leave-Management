@@ -6,58 +6,62 @@ import {
   Param,
   Body,
   ParseUUIDPipe,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { LeaveEventService } from './leave-event.service';
 import { LeaveEvent } from './leave-event.entity';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard) // Čuva sve rute osim getAll i getById (ako želiš)
 @Controller('leave-events')
 export class LeaveEventController {
   constructor(private readonly leaveEventService: LeaveEventService) {}
 
-  // Dohvati sva odsustva
+  // ====================== SVI EVENTI (ADMIN VIEW) ======================
   @Get()
   async getAll(): Promise<LeaveEvent[]> {
     return this.leaveEventService.getAllEvents();
   }
 
-  // Dohvati jedno odsustvo po ID
+  // ====================== JEDNO EVENT PO ID ======================
   @Get(':id')
-  async getById(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<LeaveEvent | null> {
+  async getById(@Param('id', ParseUUIDPipe) id: string): Promise<LeaveEvent | null> {
     return this.leaveEventService.getEventById(id);
   }
 
-  // Kreiranje odsustva
-  @Post()
-  async create(
-    @Body()
-    body: {
-      userId: string;
-      leaveTypeId: string;
-      startDate: string;
-      endDate: string;
-      note?: string;
-    },
-  ): Promise<LeaveEvent> {
-    return this.leaveEventService.createLeaveEvent(
-      body.userId,
-      body.leaveTypeId,
-      new Date(body.startDate),
-      new Date(body.endDate),
-      body.note,
-    );
-  }
-
-  // Odobravanje odsustva
+  // ====================== KREIRAJ ODSUSTVO ======================
+@Post()
+async create(
+  @Req() req,
+  @Body() body: { leaveTypeId: string; startDate: string; endDate: string; note?: string }
+): Promise<LeaveEvent> {
+  console.log('REQ.USER PAYLOAD:', req.user); // <--- ovo će ti pokazati ID i polja
+  const userId = req.user.userId; // ili req.user.sub, zavisi šta JWT ima
+  return this.leaveEventService.createLeaveEvent(
+    userId,
+    body.leaveTypeId,
+    new Date(body.startDate),
+    new Date(body.endDate),
+    body.note,
+  );
+}
+  // ====================== ODOBRI ODSUSTVO (ADMIN) ======================
   @Patch(':id/approve')
   async approve(@Param('id', ParseUUIDPipe) id: string): Promise<LeaveEvent> {
     return this.leaveEventService.approveLeaveEvent(id);
   }
 
-  // Odbijanje odsustva
+  // ====================== ODBIJ ODSUSTVO (ADMIN) ======================
   @Patch(':id/reject')
   async reject(@Param('id', ParseUUIDPipe) id: string): Promise<LeaveEvent> {
     return this.leaveEventService.rejectLeaveEvent(id);
+  }
+
+  // ====================== MOJA ODSUSTVA ======================
+  @Get('me')
+  async getMyLeaves(@Req() req) {
+    const userId = req.user.id;
+    return this.leaveEventService.getUserEvents(userId);
   }
 }

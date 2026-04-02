@@ -11,14 +11,17 @@ export class LeaveEventService {
   constructor(
     @InjectRepository(LeaveEvent)
     private readonly leaveEventRepo: Repository<LeaveEvent>,
+
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+
     @InjectRepository(LeaveType)
     private readonly leaveTypeRepo: Repository<LeaveType>,
+
     private readonly leaveBalanceService: LeaveBalanceService,
   ) {}
 
-  // Kreiranje novog odsustva
+  // ====================== CREATE ======================
   async createLeaveEvent(
     userId: string,
     leaveTypeId: string,
@@ -26,36 +29,26 @@ export class LeaveEventService {
     endDate: Date,
     note?: string,
   ): Promise<LeaveEvent> {
-
-  const overlappingEvent = await this.leaveEventRepo
-  .createQueryBuilder('event')
-  .where('event.userId = :userId', { userId })
-  .andWhere(
-    'event.startDate <= :endDate AND event.endDate >= :startDate',
-    { startDate, endDate },
-  )
-  .andWhere('event.status IN (:...statuses)', {
-  statuses: ['PENDING', 'APPROVED'],
-  })
-  .getOne();
-
-  if (overlappingEvent) {
-  throw new Error('Zaposleni je vec zatražio odsustvo u tom periodu');
-  }
-
     const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) throw new Error('User not found');
 
     const leaveType = await this.leaveTypeRepo.findOneBy({ id: leaveTypeId });
     if (!leaveType) throw new Error('Leave type not found');
 
+    // Provera preklapanja PENDING ili APPROVED
+    const overlapping = await this.leaveEventRepo
+      .createQueryBuilder('event')
+      .where('event.userId = :userId', { userId })
+      .andWhere('event.startDate <= :endDate AND event.endDate >= :startDate', { startDate, endDate })
+      .andWhere('event.status IN (:...statuses)', { statuses: [LeaveStatus.PENDING, LeaveStatus.APPROVED] })
+      .getOne();
+
+    if (overlapping) throw new Error('Vec postoji odsustvo u tom periodu');
+
     const days = this.calculateWorkingDays(startDate, endDate);
+    if (days === 0) throw new Error('Period se sastoji samo od vikenda');
 
-    if (days === 0) {
-    throw new Error('Označeni period je vikend');
-    }
-
-    const leaveEvent = this.leaveEventRepo.create({
+    const event = this.leaveEventRepo.create({
       user,
       leaveType,
       startDate,
@@ -65,74 +58,62 @@ export class LeaveEventService {
       note,
     });
 
-    return this.leaveEventRepo.save(leaveEvent);
+    return this.leaveEventRepo.save(event);
   }
 
-  // Odobravanje odsustva
+  // ====================== APPROVE ======================
   async approveLeaveEvent(id: string): Promise<LeaveEvent> {
-    const event = await this.leaveEventRepo.findOne({
-      where: { id },
-      relations: ['user', 'leaveType'],
-    });
+    const event = await this.leaveEventRepo.findOne({ where: { id }, relations: ['user', 'leaveType'] });
     if (!event) throw new Error('Leave event not found');
+    if (event.status !== LeaveStatus.PENDING) throw new Error('Event already processed');
 
-    if (event.status !== LeaveStatus.PENDING)
-      throw new Error('Leave event already processed');
-
-    // Ako je tip odsustva koji troši dane godišnjeg, skidamo dane iz LeaveBalance
     if (event.leaveType.countsAsVacation) {
       const year = event.startDate.getFullYear();
-      await this.leaveBalanceService.deductDays(
-        event.user.id,
-        event.days,
-        year,
-      );
+      await this.leaveBalanceService.deductDays(event.user.id, event.days, year);
     }
 
     event.status = LeaveStatus.APPROVED;
     return this.leaveEventRepo.save(event);
   }
 
-  // Odbijanje odsustva
+  // ====================== REJECT ======================
   async rejectLeaveEvent(id: string): Promise<LeaveEvent> {
-    const event = await this.leaveEventRepo.findOneBy({ id });
+    const event = await this.leaveEventRepo.findOne({ where: { id }, relations: ['user', 'leaveType'] });
     if (!event) throw new Error('Leave event not found');
-
-    if (event.status !== LeaveStatus.PENDING)
-      throw new Error('Leave event already processed');
+    if (event.status !== LeaveStatus.PENDING) throw new Error('Event already processed');
 
     event.status = LeaveStatus.REJECTED;
     return this.leaveEventRepo.save(event);
   }
 
-  // Dohvatanje svih odsustava
+  // ====================== GET ALL ======================
   async getAllEvents(): Promise<LeaveEvent[]> {
-    return this.leaveEventRepo.find({ relations: ['user', 'leaveType'] });
+    return this.leaveEventRepo.find({ relations: ['user', 'leaveType'], order: { startDate: 'DESC' } });
   }
 
-  // Dohvatanje jednog odsustva po id
+  // ====================== GET ONE ======================
   async getEventById(id: string): Promise<LeaveEvent | null> {
-    return this.leaveEventRepo.findOne({
-      where: { id },
-      relations: ['user', 'leaveType'],
+    return this.leaveEventRepo.findOne({ where: { id }, relations: ['user', 'leaveType'] });
+  }
+
+  // ====================== GET BY USER ======================
+  async getUserEvents(userId: string): Promise<LeaveEvent[]> {
+    return this.leaveEventRepo.find({
+      where: { user: { id: userId } },
+      relations: ['leaveType'],
+      order: { startDate: 'DESC' },
     });
   }
 
+  // ====================== WORKING DAYS CALC ======================
   private calculateWorkingDays(startDate: Date, endDate: Date): number {
-  let days = 0;
-  const current = new Date(startDate);
-
-  while (current <= endDate) {
-    const dayOfWeek = current.getDay();
-
-    // 0 = nedelja, 6 = subota
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      days++;
+    let count = 0;
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      const day = current.getDay();
+      if (day !== 0 && day !== 6) count++;
+      current.setDate(current.getDate() + 1);
     }
-
-    current.setDate(current.getDate() + 1);
+    return count;
   }
-
-  return days;
-}
 }
