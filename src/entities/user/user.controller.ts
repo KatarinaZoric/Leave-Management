@@ -24,11 +24,6 @@ export class UsersController {
     return this.usersService.getUserById(id);
   }
 
-  @Post()
-  async createUser(@Body() body: Partial<User>): Promise<User> {
-    return this.usersService.createUser(body);
-  }
-
   @Patch(':id')
   async updateUser(
     @Param('id') id: string,

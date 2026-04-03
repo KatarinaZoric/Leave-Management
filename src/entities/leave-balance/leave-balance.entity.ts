@@ -3,10 +3,11 @@ import { User } from '../user/user.entity';
 
 @Entity('leave_balance')
 export class LeaveBalance {
+
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User, (user) => user.balances)
+  @ManyToOne(() => User, (user) => user.balances, { onDelete: 'CASCADE' })
   user: User;
 
   @Column()
@@ -18,6 +19,9 @@ export class LeaveBalance {
   @Column({ default: 0 })
   usedDays: number;
 
-  @Column({ default: 0 })
+  @Column()
   remainingDays: number;
+
+  @Column({ type: 'date' })
+  validUntil: Date;
 }

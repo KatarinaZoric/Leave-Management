@@ -3,8 +3,7 @@
 import { IsInt, IsOptional, IsPositive, IsUUID, Min } from 'class-validator';
 
 export class CreateLeaveBalanceDto {
-  @IsUUID()
-  userId: string;
+  email: string;
 
   @IsInt()
   @Min(2000) // ili bilo koja minimalna godina koju želiš
@@ -18,4 +17,7 @@ export class CreateLeaveBalanceDto {
   @IsOptional()
   @Min(0)
   remainingDays?: number; // opcionalno, ako se ne prosledi, koristi totalDays
+
+  @IsOptional()
+  validUntil: Date;
 }

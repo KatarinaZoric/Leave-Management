@@ -64,4 +64,9 @@ async create(
     const userId = req.user.id;
     return this.leaveEventService.getUserEvents(userId);
   }
+
+  @Get('user/:userId')
+async getUserLeaves(@Param('userId', ParseUUIDPipe) userId: string) {
+  return this.leaveEventService.getUserEvents(userId);
+}
 }

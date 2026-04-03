@@ -1,7 +1,8 @@
 // src/auth/auth.controller.ts
-import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, UnauthorizedException, UseGuards, Patch, Req, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserRole } from 'src/entities/user/user.entity';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -34,5 +35,19 @@ async register(
     body.surname,
     body.role,
   );
+}
+
+ 
+  @UseGuards(JwtAuthGuard)
+@Patch('change-password')
+async changePassword(
+  @Req() req,
+  @Body() body: { oldPassword: string; newPassword: string },
+) {
+  console.log('REQ.USER:', req.user); // debug
+  const userId = req.user.userId; // <--- ovde ide userId, ne sub
+  const { oldPassword, newPassword } = body;
+
+  return this.authService.changePassword(userId, oldPassword, newPassword);
 }
 }

@@ -10,11 +10,6 @@ export class UsersService {
     private readonly userRepo: Repository<User>,
   ) {}
 
-  async createUser(data: Partial<User>): Promise<User> {
-    const user = this.userRepo.create(data);
-    return this.userRepo.save(user);
-  }
-
   async getAllUsers(): Promise<User[]> {
     return this.userRepo.find();
   }

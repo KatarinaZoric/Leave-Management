@@ -63,28 +63,39 @@ export class LeaveEventService {
 
   // ====================== APPROVE ======================
   async approveLeaveEvent(id: string): Promise<LeaveEvent> {
-    const event = await this.leaveEventRepo.findOne({ where: { id }, relations: ['user', 'leaveType'] });
-    if (!event) throw new Error('Leave event not found');
-    if (event.status !== LeaveStatus.PENDING) throw new Error('Event already processed');
+  const event = await this.leaveEventRepo.findOne({
+    where: { id },
+    relations: ['user', 'leaveType'],
+  });
 
-    if (event.leaveType.countsAsVacation) {
-      const year = event.startDate.getFullYear();
-      await this.leaveBalanceService.deductDays(event.user.id, event.days, year);
-    }
+  if (!event) throw new Error('Leave event not found');
+  if (event.status !== LeaveStatus.PENDING)
+    throw new Error('Event already processed');
 
-    event.status = LeaveStatus.APPROVED;
-    return this.leaveEventRepo.save(event);
+  // Dedukcija dana ako leave type računa kao godišnji
+  if (event.leaveType.countsAsVacation) {
+    const year = event.startDate.getFullYear();
+    await this.leaveBalanceService.deductDays(event.user.id, event.days, year);
   }
 
-  // ====================== REJECT ======================
-  async rejectLeaveEvent(id: string): Promise<LeaveEvent> {
-    const event = await this.leaveEventRepo.findOne({ where: { id }, relations: ['user', 'leaveType'] });
-    if (!event) throw new Error('Leave event not found');
-    if (event.status !== LeaveStatus.PENDING) throw new Error('Event already processed');
+  event.status = LeaveStatus.APPROVED;
+  return this.leaveEventRepo.save(event);
+}
 
-    event.status = LeaveStatus.REJECTED;
-    return this.leaveEventRepo.save(event);
-  }
+async rejectLeaveEvent(id: string): Promise<LeaveEvent> {
+  const event = await this.leaveEventRepo.findOne({
+    where: { id },
+    relations: ['user', 'leaveType'],
+  });
+
+  if (!event) throw new Error('Leave event not found');
+  if (event.status !== LeaveStatus.PENDING)
+    throw new Error('Event already processed');
+
+  // Reject ne menja LeaveBalance
+  event.status = LeaveStatus.REJECTED;
+  return this.leaveEventRepo.save(event);
+}
 
   // ====================== GET ALL ======================
   async getAllEvents(): Promise<LeaveEvent[]> {
