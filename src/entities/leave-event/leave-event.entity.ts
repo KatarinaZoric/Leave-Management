@@ -58,4 +58,7 @@ export class LeaveEvent {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @Column({ nullable: true })
+rejectReason?: string;
 }

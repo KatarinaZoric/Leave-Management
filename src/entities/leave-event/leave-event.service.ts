@@ -82,7 +82,7 @@ export class LeaveEventService {
   return this.leaveEventRepo.save(event);
 }
 
-async rejectLeaveEvent(id: string): Promise<LeaveEvent> {
+async rejectLeaveEvent(id: string, reason: string): Promise<LeaveEvent> {
   const event = await this.leaveEventRepo.findOne({
     where: { id },
     relations: ['user', 'leaveType'],
@@ -92,8 +92,9 @@ async rejectLeaveEvent(id: string): Promise<LeaveEvent> {
   if (event.status !== LeaveStatus.PENDING)
     throw new Error('Event already processed');
 
-  // Reject ne menja LeaveBalance
   event.status = LeaveStatus.REJECTED;
+  event.rejectReason = reason; // čuvamo razlog odbijanja
+
   return this.leaveEventRepo.save(event);
 }
 

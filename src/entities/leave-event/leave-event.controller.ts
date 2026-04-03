@@ -53,10 +53,13 @@ async create(
   }
 
   // ====================== ODBIJ ODSUSTVO (ADMIN) ======================
-  @Patch(':id/reject')
-  async reject(@Param('id', ParseUUIDPipe) id: string): Promise<LeaveEvent> {
-    return this.leaveEventService.rejectLeaveEvent(id);
-  }
+ @Patch(':id/reject')
+async reject(
+  @Param('id', ParseUUIDPipe) id: string,
+  @Body('reason') reason: string, // <-- dodajemo razlog iz body
+): Promise<LeaveEvent> {
+  return this.leaveEventService.rejectLeaveEvent(id, reason);
+}
 
   // ====================== MOJA ODSUSTVA ======================
   @Get('me')
