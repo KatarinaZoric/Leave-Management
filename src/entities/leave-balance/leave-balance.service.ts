@@ -107,4 +107,25 @@ export class LeaveBalanceService {
     if (remainingToDeduct > 0)
       throw new Error('Not enough vacation days across all valid balances');
   }
+
+  async getUsersWithBalances() {
+  const users = await this.userRepo.find({ relations: ['balances'] });
+
+  return users.map(user => {
+    const remainingDays: Record<string, number> = {};
+
+    user.balances?.forEach(balance => {
+      remainingDays[balance.year] = balance.remainingDays;
+    });
+
+    return {
+      id: user.id,
+      name: user.name,
+      surname: user.surname,
+      email: user.email,
+      role: user.role,
+      remainingDays, // { 2025: 5, 2026: 12 }
+    };
+  });
+}
 }

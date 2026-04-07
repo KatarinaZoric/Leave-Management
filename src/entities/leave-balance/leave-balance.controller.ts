@@ -22,6 +22,11 @@ export class LeaveBalanceController {
     private readonly leaveBalanceService: LeaveBalanceService,
   ) {}
 
+  
+  @Get('users')
+async getUsersWithBalances() {
+  return this.leaveBalanceService.getUsersWithBalances();
+}
   // ====================== MY BALANCE ======================
   @Get(':year')
   async getMyBalance(
