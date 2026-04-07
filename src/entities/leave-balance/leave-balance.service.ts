@@ -50,7 +50,7 @@ export class LeaveBalanceService {
   }
 
   async createBalance(dto: CreateLeaveBalanceDto): Promise<LeaveBalance> {
-  const { email, year, totalDays, remainingDays, validUntil } = dto;
+  const { email, year, totalDays, remainingDays } = dto;
 
   const user = await this.userRepo.findOneBy({ email });
   if (!user) throw new Error('User not found');
@@ -58,13 +58,16 @@ export class LeaveBalanceService {
   const remaining = remainingDays ?? totalDays;
   const usedDays = totalDays - remaining;
 
+  // Auto postavljanje validUntil na 1.6. naredne godine
+  const validUntil = new Date(`${year + 1}-06-01T23:59:59.999Z`);
+
   const balance = this.leaveBalanceRepo.create({
     user,
     year,
     totalDays,
     usedDays,
     remainingDays: remaining,
-    validUntil: new Date(validUntil),
+    validUntil, // backend sada postavlja automatski
   });
 
   return this.leaveBalanceRepo.save(balance);

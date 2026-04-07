@@ -68,9 +68,9 @@ async create(
 ): Promise<LeaveBalance> {
   const user = req.user as JwtPayload;
 
-  if (user.role !== 'ADMIN') {
-    throw new Error('Only admins can create leave balances');
-  }
+  if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+  throw new Error('Only admins or managers can create leave balances');
+}
 
   return this.leaveBalanceService.createBalance(body);
 }
