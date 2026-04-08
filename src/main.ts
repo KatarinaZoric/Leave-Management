@@ -7,7 +7,7 @@ async function bootstrap() {
 
   // Omogućavamo frontend-u da šalje request-e ka backend-u
   app.enableCors({
-    origin: 'http://localhost:5173', // frontend port
+    origin: ['https://sbb20428.mycpanel.rs/leave-management/'], // live frontend URL
     credentials: true, // opciono, za cookie-based auth
   });
 
