@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+
 import { UsersModule } from './entities/user/user.module';
 import { LeaveBalanceModule } from './entities/leave-balance/leave-balance.module';
 import { LeaveTypeModule } from './entities/leave-type/leave.type.module';
@@ -8,24 +10,29 @@ import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'katarina0506',
-      database: 'leave_management',
-      autoLoadEntities: true,
-      synchronize: false,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
     }),
-
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        url: config.get<string>('DATABASE_URL'),
+        autoLoadEntities: true,
+        synchronize: false,
+        migrationsRun: true,
+        migrations: ['dist/migrations/*.js'],
+        logging: true,
+        extra: { ssl: { rejectUnauthorized: false } }, // obavezno za Supabase
+      }),
+    }),
     UsersModule,
     LeaveTypeModule,
     LeaveEventModule,
     LeaveBalanceModule,
-    AuthModule
+    AuthModule,
   ],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}
