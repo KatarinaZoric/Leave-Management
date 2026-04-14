@@ -10,7 +10,7 @@ export const AppDataSource = new DataSource({
   url: process.env.DATABASE_URL,
   entities: [User, LeaveBalance, LeaveType, LeaveEvent],
   migrations: ['src/migrations/*.ts'],
-  synchronize: false,
+  synchronize: true,
   logging: false,
   ssl: {
     rejectUnauthorized: false,
