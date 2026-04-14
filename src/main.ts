@@ -9,9 +9,10 @@ async function bootstrap() {
   app.enableCors({
   origin: [
     'http://localhost:5173',
-    'https://leave-project.vercel.app'
+    'https://leave-project.vercel.app',
+    'https://leave-project-o161094ee-katarinas-projects-23d67f0f.vercel.app'
   ],
-  credentials: true, // opciono, za cookie-based auth
+      credentials: true, // opciono, za cookie-based auth
   });
 
   const port = process.env.PORT ?? 3000;
