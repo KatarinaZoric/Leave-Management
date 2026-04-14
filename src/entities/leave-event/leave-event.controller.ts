@@ -24,6 +24,17 @@ export class LeaveEventController {
     return this.leaveEventService.getAllEvents();
   }
 
+    @Get('me')
+  async getMyLeaves(@Req() req) {
+    const userId = req.user.id;
+    return this.leaveEventService.getUserEvents(userId);
+  }
+
+  @Get('user/:userId')
+async getUserLeaves(@Param('userId', ParseUUIDPipe) userId: string) {
+  return this.leaveEventService.getUserEvents(userId);
+}
+
   // ====================== JEDNO EVENT PO ID ======================
   @Get(':id')
   async getById(@Param('id', ParseUUIDPipe) id: string): Promise<LeaveEvent | null> {
@@ -61,15 +72,14 @@ async reject(
   return this.leaveEventService.rejectLeaveEvent(id, reason);
 }
 
-  // ====================== MOJA ODSUSTVA ======================
-  @Get('me')
-  async getMyLeaves(@Req() req) {
-    const userId = req.user.id;
-    return this.leaveEventService.getUserEvents(userId);
-  }
+@Patch(':id/cancel')
+async cancelLeave(
+  @Param('id', ParseUUIDPipe) id: string,
+  @Req() req,
+) {
+  const userId = req.user.userId || req.user.id; // zavisi od JWT-a
 
-  @Get('user/:userId')
-async getUserLeaves(@Param('userId', ParseUUIDPipe) userId: string) {
-  return this.leaveEventService.getUserEvents(userId);
+  return this.leaveEventService.cancelLeaveEvent(id, userId);
 }
+
 }

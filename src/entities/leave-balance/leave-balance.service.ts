@@ -128,4 +128,26 @@ export class LeaveBalanceService {
     };
   });
 }
+
+async addDaysBack(
+  userId: string,
+  days: number,
+  year: number,
+) {
+  const balance = await this.leaveBalanceRepo.findOne({
+    where: {
+      user: { id: userId },
+      year,
+    },
+    relations: ['user'],
+  });
+
+  if (!balance) throw new Error('Balance not found');
+
+  // KLJUČ FIX:
+  balance.usedDays = Math.max(0, balance.usedDays - days);
+  balance.remainingDays = balance.totalDays - balance.usedDays;
+
+  return this.leaveBalanceRepo.save(balance);
+}
 }

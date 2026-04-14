@@ -128,4 +128,48 @@ async rejectLeaveEvent(id: string, reason: string): Promise<LeaveEvent> {
     }
     return count;
   }
+
+  // ====================== CANCEL ======================
+async cancelLeaveEvent(
+  eventId: string,
+  userId: string,
+): Promise<LeaveEvent> {
+
+  const event = await this.leaveEventRepo.findOne({
+    where: { id: eventId },
+    relations: ['user', 'leaveType'],
+  });
+
+  if (!event) throw new Error('Leave event not found');
+
+  // ✔ korisnik može samo svoje
+  if (event.user.id !== userId)
+    throw new Error('Nemate dozvolu za otkazivanje');
+
+  // ✔ samo pending ili approved
+  if (
+    event.status !== LeaveStatus.APPROVED &&
+    event.status !== LeaveStatus.PENDING
+  ) {
+    throw new Error('Odsustvo se ne može otkazati');
+  }
+
+  // ✔ VRACANJE DANA AKO JE VEC ODOBRENO
+  if (
+    event.status === LeaveStatus.APPROVED &&
+    event.leaveType.countsAsVacation
+  ) {
+    const year = event.startDate.getFullYear();
+
+    await this.leaveBalanceService.addDaysBack(
+      event.user.id,
+      event.days,
+      year,
+    );
+  }
+
+  event.status = LeaveStatus.CANCELLED;
+
+  return this.leaveEventRepo.save(event);
+}
 }

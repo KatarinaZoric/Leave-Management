@@ -4,14 +4,16 @@ import { User } from './entities/user/user.entity';
 import { LeaveBalance } from './entities/leave-balance/leave-balance.entity';
 import { LeaveType } from './entities/leave-type/leave-type.entity';
 import { LeaveEvent } from './entities/leave-event/leave-event.entity';
-import * as dotenv from 'dotenv';
-dotenv.config();
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  url: process.env.DATABASE_URL,
+  host: 'localhost',
+  port: 5432,
+  username: 'postgres',
+  password: 'katarina0506',
+  database: 'leave_management',
   entities: [User, LeaveBalance, LeaveType, LeaveEvent],
-  migrations: ['dist/migrations/*.js'],
+  migrations: ['src/migrations/*.ts'],
   synchronize: false,
-  logging: true,
+  logging: false,
 });
