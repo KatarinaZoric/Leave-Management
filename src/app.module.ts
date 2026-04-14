@@ -9,15 +9,14 @@ import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'katarina0506',
-      database: 'leave_management',
-      autoLoadEntities: true,
-      synchronize: false,
-    }),
+  type: 'postgres',
+  url: process.env.DATABASE_URL,
+  autoLoadEntities: true,
+  synchronize: false,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+}),
 
     UsersModule,
     LeaveTypeModule,

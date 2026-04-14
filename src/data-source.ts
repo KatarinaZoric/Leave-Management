@@ -7,13 +7,12 @@ import { LeaveEvent } from './entities/leave-event/leave-event.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: 'localhost',
-  port: 5432,
-  username: 'postgres',
-  password: 'katarina0506',
-  database: 'leave_management',
+  url: process.env.DATABASE_URL,
   entities: [User, LeaveBalance, LeaveType, LeaveEvent],
   migrations: ['src/migrations/*.ts'],
   synchronize: false,
   logging: false,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });

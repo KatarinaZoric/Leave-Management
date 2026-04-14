@@ -142,11 +142,9 @@ async cancelLeaveEvent(
 
   if (!event) throw new Error('Leave event not found');
 
-  // ✔ korisnik može samo svoje
   if (event.user.id !== userId)
     throw new Error('Nemate dozvolu za otkazivanje');
 
-  // ✔ samo pending ili approved
   if (
     event.status !== LeaveStatus.APPROVED &&
     event.status !== LeaveStatus.PENDING

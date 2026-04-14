@@ -7,8 +7,11 @@ async function bootstrap() {
 
   // Omogućavamo frontend-u da šalje request-e ka backend-u
   app.enableCors({
-    origin: ['https://sbb20428.mycpanel.rs/leave-management/'], // live frontend URL
-    credentials: true, // opciono, za cookie-based auth
+  origin: [
+    'http://localhost:5173',
+    'https://leave-project.vercel.app'
+  ],
+  credentials: true, // opciono, za cookie-based auth
   });
 
   const port = process.env.PORT ?? 3000;
